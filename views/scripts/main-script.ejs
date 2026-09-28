@@ -1,0 +1,52 @@
+<!-- Bootstrap core JavaScript-->
+<script src="/vendor/jquery/jquery.min.js"></script>
+<script src="/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+
+<!-- Core plugin JavaScript-->
+<script src="/vendor/jquery-easing/jquery.easing.min.js"></script>
+
+<!-- Custom scripts for all pages-->
+<script src="/javascripts/sb-admin-2.min.js"></script>
+
+
+<script>
+    const Query = (url, type, data = null) => {
+        return new Promise((resolve, reject) => {
+            console.log(url);
+            let ajaxOptions = {
+                url: url,
+                method: type,
+                dataType: 'json',
+                success: function (result) {
+                    resolve(result)
+                },
+                error: function (err) {
+                    reject(err)
+                    console.log('Error', 'An error occurred while communicating with the server.')
+                },
+            }
+
+            if (['PUT', 'POST', 'PATCH', 'DELETE'].includes(type) && data) {
+                ajaxOptions.data = JSON.stringify(data)
+                ajaxOptions.contentType = 'application/json'
+            }
+
+            $.ajax(ajaxOptions)
+        })
+    }
+
+    const queryUtility = {
+        async Load(url) {
+            return await Query(url, 'GET')
+        },
+        async Save(url, data) {
+            return await Query(url, 'POST', data)
+        },
+        async Update(url, data) {
+            return await Query(url, 'PUT', data)
+        },
+        async Delete(url, data) {
+            return await Query(url, 'DELETE', data)
+        },
+    }
+</script>

@@ -1,0 +1,69 @@
+<script>
+    $(document).ready(function () {
+        let studentid;
+        $("#dataTable tbody").on("click", "tr", function () {
+            let dataRow = [];
+
+            $(this)
+                .find("td")
+                .each(function () {
+                    dataRow.push($(this).text().trim());
+                });
+
+            if (dataRow.length > 0) {
+                studentid = dataRow[0];
+                console.log("Selected Company:", studentid);
+            }
+        });
+
+        console.log(studentid);
+
+        async function salesTable() {
+            const response = await queryUtility.Load("/users/load");
+            console.log(response);
+            const sales = response;
+
+            const $stable = $("#salesTable");
+            $stable.empty(); // Clear existing placeholder rows
+
+            // Standard for loop to iterate over rows
+            for (let i = 0; i < sales.length; i++) {
+                const item = sales[i];
+
+                // Build row HTML using the object's properties
+                // Adjust the property names (e.g., item.id, item.name) to match your backend model
+                const rowHtml = `
+        <tr>
+          <td>${item.Id ?? ""}</td>
+          <td>${item.Customer ?? ""}</td>
+          <td>${item.Invoices ?? ""}</td>
+          <td>${item.Inventory ?? ""}</td>
+          <td>${item.Subscription ?? ""}</td>
+          <td> <button class="editbutton" id="btnEdit" name="btnEdit" data-toggle="modal" data-target="#editModal">Edit</button> </td>
+          <td> <button class="deleteBtn id="btnDelete" name="deleteBtn" data-toggle="modal" data-target="#studentModel">Delete</button> </td>
+        </tr>
+      `;
+
+                $stable.append(rowHtml);
+            }
+        }
+
+        function updateFormData() {
+            return {
+                studentID: $("#studID").val(),
+                name: $("#name").val(),
+                course: $("#course").val(),
+                yearLevel: $("#yearLevel").val(),
+                email: $("#email").val(),
+            };
+        }
+
+        $("#btnEdit").on("click", async function () {
+            console.log("sdaf")
+            $("#editModal").modal("show");
+        });
+
+        //Initialization
+        salesTable();
+    });
+</script>
