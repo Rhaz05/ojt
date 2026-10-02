@@ -1,37 +1,86 @@
 <div class="card shadow mb-4">
-    <div class="card-header py-3">
-        <h6 class="m-0 font-weight-bold text-primary">DataTables Example</h6>
+    <div class="card-header py-3 d-flex justify-content-between align-items-center">
+        <h6 class="m-0 font-weight-bold text-primary">Students</h6>
+        <button type="button" class="btn btn-primary btn-sm" id="btnAdd">
+            <i class="fas fa-plus mr-1"></i>Add Student
+        </button>
     </div>
     <div class="card-body">
         <div class="table-responsive">
-            <table class="table table-bordered" id="dataTable" name="dataTable" width="100%" cellspacing="0">
+            <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
                 <thead>
                     <tr>
-                        <th>Customer</th>
-                        <th>Invoices</th>
-                        <th>Inventory</th>
-                        <th>Subscription</th>
+                        <th>Student ID</th>
+                        <th>Name</th>
+                        <th>Course</th>
+                        <th>Year Level</th>
+                        <th>Email</th>
+                        <th style="width: 170px;">Action</th>
                     </tr>
                 </thead>
-
-                <tbody id="salesTable"></tbody>
+                <tbody id="studentTable"></tbody>
             </table>
         </div>
     </div>
 </div>
-<div class="modal fade" id="editModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
-    aria-hidden="true" <div class="modal-dialog" role="document">
-    <div class="modal-content">
-        <div class="modal-header"></div>
-        <h5 class="modal-title" id="editH5">Ready to leave?</h5>
-        <div class="modal-body">
-            Select "Logout" below if you are ready to end your current session.
-        </div>
-        <div class="modal-footer">
-            <button class="btn btn-secondary" type="button" data-dismiss="modal">
-                Cancel
-            </button>
-            <a class="btn btn-primary" href="login.html">Logout</a>
+
+<div class="modal fade" id="studentModal" tabindex="-1" role="dialog" aria-labelledby="studentModalTitle"
+    aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="studentModalTitle"></h5>
+                <button class="close text-white" type="button" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <form id="studentForm" novalidate>
+                <div class="modal-body">
+                    <input type="hidden" id="studentId">
+
+                    <div class="form-group">
+                        <label for="studentName" class="small font-weight-bold text-gray-800">Full Name</label>
+                        <input type="text" class="form-control" id="studentName" placeholder="e.g. Juan Dela Cruz"
+                            required>
+                        <div class="invalid-feedback">Name is required.</div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group col-md-7">
+                            <label for="studentCourse" class="small font-weight-bold text-gray-800">Course</label>
+                            <input type="text" class="form-control" id="studentCourse" placeholder="e.g. BSIT" required>
+                            <div class="invalid-feedback">Course is required.</div>
+                        </div>
+                        <div class="form-group col-md-5">
+                            <label for="studentYearLevel" class="small font-weight-bold text-gray-800">Year
+                                Level</label>
+                            <select class="form-control" id="studentYearLevel" required>
+                                <option value="">Select...</option>
+                                <option>1st Year</option>
+                                <option>2nd Year</option>
+                                <option>3rd Year</option>
+                                <option>4th Year</option>
+                            </select>
+                            <div class="invalid-feedback">Select a year level.</div>
+                        </div>
+                    </div>
+
+                    <div class="form-group mb-0">
+                        <label for="studentEmail" class="small font-weight-bold text-gray-800">Email</label>
+                        <input type="email" class="form-control" id="studentEmail" placeholder="name@school.edu"
+                            required>
+                        <div class="invalid-feedback" id="studentEmailFeedback">A valid email is required.</div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" type="button" data-dismiss="modal">Cancel</button>
+                    <button class="btn btn-primary" type="submit" id="submitBtn">
+                        <i class="fas fa-save mr-1"></i>Save
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
