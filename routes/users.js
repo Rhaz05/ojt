@@ -120,4 +120,8 @@ router.delete("/delete/:id", function (req, res) {
   res.json({ success: true, message: "Student deleted." });
 });
 
+<<<<<<< HEAD
 module.exports = router;
+=======
+module.exports = router;
+>>>>>>> 59184c9dc21b0be47a35e60e3a9a0904d873d8c9

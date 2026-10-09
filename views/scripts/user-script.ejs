@@ -1,4 +1,5 @@
 <script>
+<<<<<<< HEAD
   $(document).ready(function () {
     let studentsById = {};
 
@@ -21,6 +22,201 @@
       showConfirmButton: false,
       timer: 2500,
       timerProgressBar: true,
+=======
+    $(document).ready(function () {
+        let studentsById = {};
+
+        const esc = (v) =>
+            String(v ?? "").replace(/[&<>"']/g, (c) => ({
+                "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+            }[c]));
+
+        const Toast = Swal.mixin({
+            toast: true,
+            position: "top-end",
+            showConfirmButton: false,
+            timer: 2500,
+            timerProgressBar: true,
+        });
+
+        const errorMessage = (err, fallback) =>
+            err?.responseJSON?.message || fallback;
+
+        const emailOk = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+
+        // ---------- LOAD ----------
+        async function loadStudents() {
+            const students = await queryUtility.Load("/users/load");
+            const $tbody = $("#studentTable").empty();
+            studentsById = {};
+
+            for (const s of students) {
+                studentsById[s.Id] = s;
+
+                $tbody.append(`
+                    <tr>
+                        <td>${esc(s.Id)}</td>
+                        <td>${esc(s.Name)}</td>
+                        <td>${esc(s.Course)}</td>
+                        <td>${esc(s.YearLevel)}</td>
+                        <td>${esc(s.Email)}</td>
+                        <td>
+                            <button type="button" class="btn btn-secondary btn-sm btn-edit" data-id="${esc(s.Id)}">
+                                <i class="fas fa-edit"></i> Edit
+                            </button>
+                            <button type="button" class="btn btn-danger btn-sm ml-2 btn-delete" data-id="${esc(s.Id)}">
+                                <i class="fas fa-trash"></i> Delete
+                            </button>
+                        </td>
+                    </tr>
+                `);
+            }
+        }
+
+        // ---------- MODAL HELPERS ----------
+        function openModal(student) {
+            const isEdit = !!student;
+
+            $("#studentForm")[0].reset();
+            $("#studentForm .form-control").removeClass("is-invalid");
+
+            $("#studentId").val(isEdit ? student.Id : "");
+            $("#studentModalTitle").html(
+                isEdit
+                    ? '<i class="fas fa-user-edit mr-2"></i>Edit Student'
+                    : '<i class="fas fa-user-plus mr-2"></i>Add Student'
+            );
+
+            if (isEdit) {
+                $("#studentName").val(student.Name);
+                $("#studentCourse").val(student.Course);
+                $("#studentYearLevel").val(student.YearLevel);
+                $("#studentEmail").val(student.Email);
+            }
+
+            $("#studentModal").modal("show");
+        }
+
+        function getFormData() {
+            return {
+                Name: $("#studentName").val().trim(),
+                Course: $("#studentCourse").val().trim(),
+                YearLevel: $("#studentYearLevel").val(),
+                Email: $("#studentEmail").val().trim(),
+            };
+        }
+
+        function validate(p) {
+            const checks = {
+                "#studentName": !!p.Name,
+                "#studentCourse": !!p.Course,
+                "#studentYearLevel": !!p.YearLevel,
+                "#studentEmail": emailOk(p.Email),
+            };
+            let valid = true;
+            for (const [sel, ok] of Object.entries(checks)) {
+                $(sel).toggleClass("is-invalid", !ok);
+                if (!ok) valid = false;
+            }
+            return valid;
+        }
+
+        // ---------- ADD / EDIT OPEN ----------
+        $("#btnAdd").on("click", () => openModal(null));
+
+        $("#studentTable").on("click", ".btn-edit", function () {
+            const student = studentsById[$(this).data("id")];
+            if (student) openModal(student);
+        });
+
+        // ---------- SUBMIT (create or update) ----------
+        $("#studentForm").on("submit", async function (e) {
+            e.preventDefault();
+
+            const id = $("#studentId").val();
+            const isEdit = id !== "";
+            const payload = getFormData();
+
+            if (!validate(payload)) return;
+
+            const confirm = await Swal.fire({
+                title: isEdit ? "Save changes?" : "Add this student?",
+                text: isEdit
+                    ? `Update ${payload.Name}'s record?`
+                    : `Add ${payload.Name} to the list?`,
+                icon: "question",
+                showCancelButton: true,
+                confirmButtonText: isEdit ? "Yes, save" : "Yes, add",
+                cancelButtonText: "Cancel",
+                confirmButtonColor: "#4e73df",
+                cancelButtonColor: "#858796",
+            });
+            if (!confirm.isConfirmed) return;
+
+            Swal.fire({
+                title: "Saving...",
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading(),
+            });
+
+            try {
+                if (isEdit) {
+                    await queryUtility.Update(`/users/update/${encodeURIComponent(id)}`, payload);
+                } else {
+                    await queryUtility.Save("/users/create", payload);
+                }
+
+                $("#studentModal").modal("hide");
+                await loadStudents();
+                Swal.close();
+                Toast.fire({
+                    icon: "success",
+                    title: isEdit ? "Student updated successfully" : "Student added successfully",
+                });
+            } catch (err) {
+                Swal.fire({
+                    icon: "error",
+                    title: isEdit ? "Update failed" : "Create failed",
+                    text: errorMessage(err, "Something went wrong. Please try again."),
+                    confirmButtonColor: "#4e73df",
+                });
+            }
+        });
+
+        // ---------- DELETE ----------
+        $("#studentTable").on("click", ".btn-delete", async function () {
+            const id = $(this).data("id");
+            const student = studentsById[id];
+            if (!student) return;
+
+            const confirm = await Swal.fire({
+                title: "Delete this student?",
+                text: `${student.Name} will be permanently removed.`,
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonText: "Yes, delete",
+                cancelButtonText: "Cancel",
+                confirmButtonColor: "#e74a3b",
+                cancelButtonColor: "#858796",
+            });
+            if (!confirm.isConfirmed) return;
+
+            try {
+                await queryUtility.Delete(`/users/delete/${encodeURIComponent(id)}`);
+                await loadStudents();
+                Toast.fire({ icon: "success", title: "Student deleted" });
+            } catch (err) {
+                Swal.fire({
+                    icon: "error",
+                    title: "Delete failed",
+                    text: errorMessage(err, "Something went wrong. Please try again."),
+                    confirmButtonColor: "#4e73df",
+                });
+            }
+        });
+
+        loadStudents();
+>>>>>>> 59184c9dc21b0be47a35e60e3a9a0904d873d8c9
     });
 
     const errorMessage = (err, fallback) =>

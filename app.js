@@ -9,8 +9,12 @@ const {initSession} = require("./middleware/session")
 var indexRouter = require("./routes/index");
 var usersRouter = require("./routes/users");
 var rolesRouter = require("./routes/roles");
+<<<<<<< HEAD
 var testingRouter = require("./routes/testing");
 var employeeRouter = require("./routes/employee");
+=======
+var loginRouter = require("./routes/login");
+>>>>>>> 59184c9dc21b0be47a35e60e3a9a0904d873d8c9
 
 var app = express();
 
@@ -28,8 +32,12 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use("/", indexRouter);
 app.use("/users", usersRouter);
 app.use("/roles", rolesRouter);
+<<<<<<< HEAD
 app.use("/testing", testingRouter);
 app.use("/employee", employeeRouter);
+=======
+app.use("/login", loginRouter);
+>>>>>>> 59184c9dc21b0be47a35e60e3a9a0904d873d8c9
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
