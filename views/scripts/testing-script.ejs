@@ -1,0 +1,204 @@
+<script>
+  $(document).ready(function () {
+    let ordersById = {};
+
+    const esc = (v) =>
+      String(v ?? "").replace(
+        /[&<>"']/g,
+        (c) =>
+          ({
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;",
+          })[c],
+      );
+
+    const Toast = Swal.mixin({
+      toast: true,
+      position: "top-end",
+      showConfirmButton: false,
+      timer: 2500,
+      timerProgressBar: true,
+    });
+
+    const errorMessage = (err, fallback) =>
+      err?.responseJSON?.message || fallback;
+
+    async function loadOrders() {
+      const orders = await queryUtility.Load("/testing/load");
+      const $tbody = $("#orderBody").empty();
+      ordersById = {};
+
+      for (const s of orders) {
+        ordersById[s.OrderNumber] = s;
+
+        $tbody.append(`
+                    <tr>
+                        <td>${esc(s.OrderNumber)}</td>
+                        <td>${esc(s.CustomerName)}</td>
+                        <td>${esc(s.Order)}</td>
+                        <td>${esc(s.ModeOfPayment)}</td>
+                        <td>${esc(s.Total)}</td>
+                        <td>
+                            <button type="button" class="btn btn-secondary btn-sm btn-edit" data-id="${esc(s.OrderNumber)}">
+                                <i class="fas fa-edit"></i> Edit
+                            </button>
+                            <button type="button" class="btn btn-danger btn-sm ml-2 btn-delete" data-id="${esc(s.OrderNumber)}">
+                                <i class="fas fa-trash"></i> Delete
+                            </button>
+                        </td>
+                    </tr>
+                `);
+      }
+    }
+
+    function openModal(orders) {
+      const isEdit = !!orders;
+
+      $("#testingForm")[0].reset();
+      $("#testingForm .form-control").removeClass("is-invalid");
+      $("#testingId").val(isEdit ? orders.OrderNumber : "");
+      $("#testingModalTitle").html(
+        isEdit
+          ? '<i class="fas fa-user-edit mr-2"></i>Edit Order'
+          : '<i class="fas fa-user-plus mr-2"></i>Add Order',
+      );
+      if (isEdit) {
+        $("#customerName").val(orders.CustomerName);
+        $("#order").val(orders.Order);
+        $("#paymentMethod").val(orders.ModeOfPayment);
+        $("#total").val(orders.Total);
+      }
+
+      $("#testingModal").modal("show");
+    }
+
+    function getFormData() {
+      return {
+        CustomerName: $("#customerName").val().trim(),
+        Order: $("#order").val().trim(),
+        ModeOfPayment: $("#paymentMethod").val(),
+        Total: $("#total").val().trim(),
+      };
+    }
+
+    function validate(p) {
+      const checks = {
+        "#customerName": !!p.CustomerName,
+        "#order": !!p.Order,
+        "#paymentMethod": !!p.ModeOfPayment,
+        "#total": !!p.Total,
+      };
+      let valid = true;
+      for (const [sel, ok] of Object.entries(checks)) {
+        $(sel).toggleClass("is-invalid", !ok);
+        if (!ok) valid = false;
+      }
+      return valid;
+    }
+
+    // ---------- ADD / EDIT OPEN ----------
+    $("#addBtn").on("click", () => openModal(null));
+
+    $("#orderBody").on("click", ".btn-edit", function () {
+      const testing = ordersById[$(this).data("id")];
+      if (testing) openModal(testing);
+      console.log($(this).data("id"));
+    });
+
+    // ---------- SUBMIT (create or update) ----------
+    $("#testingForm").on("submit", async function (e) {
+      e.preventDefault();
+
+      const id = $("#testingId").val();
+      const isEdit = id !== "";
+      const payload = getFormData();
+
+      if (!validate(payload)) return;
+
+      const confirm = await Swal.fire({
+        title: isEdit ? "Save changes?" : "Add this order?",
+        text: isEdit
+          ? `Update ${payload.CustomerName}'s record?`
+          : `Add ${payload.CustomerName} to the list?`,
+        icon: "question",
+        showCancelButton: true,
+        confirmButtonText: isEdit ? "Yes, save" : "Yes, add",
+        cancelButtonText: "Cancel",
+        confirmButtonColor: "#4e73df",
+        cancelButtonColor: "#858796",
+      });
+      if (!confirm.isConfirmed) return;
+
+      Swal.fire({
+        title: "Saving...",
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading(),
+      });
+
+      try {
+        if (isEdit) {
+          await queryUtility.Update(
+            `/testing/update/${encodeURIComponent(id)}`,
+            payload,
+          );
+        } else {
+          await queryUtility.Save("/testing/create", payload);
+        }
+
+        $("#testingModal").modal("hide");
+        await loadOrders();
+        Swal.close();
+        Toast.fire({
+          icon: "success",
+          title: isEdit
+            ? "Order updated successfully"
+            : "Order added successfully",
+        });
+      } catch (err) {
+        Swal.fire({
+          icon: "error",
+          title: isEdit ? "Update failed" : "Create failed",
+          text: errorMessage(err, "Something went wrong. Please try again."),
+          confirmButtonColor: "#4e73df",
+        });
+      }
+    });
+
+    // ---------- DELETE ----------
+    $("#orderTable").on("click", ".btn-delete", async function () {
+      const id = $(this).data("id");
+      const order = ordersById[id];
+      if (!order) return;
+
+      const confirm = await Swal.fire({
+        title: "Delete this student?",
+        text: `${order.CustomerName} will be permanently removed.`,
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonText: "Yes, delete",
+        cancelButtonText: "Cancel",
+        confirmButtonColor: "#e74a3b",
+        cancelButtonColor: "#858796",
+      });
+      if (!confirm.isConfirmed) return;
+
+      try {
+        await queryUtility.Delete(`/testing/delete/${encodeURIComponent(id)}`);
+        await loadOrders();
+        Toast.fire({ icon: "success", title: "Order deleted" });
+      } catch (err) {
+        Swal.fire({
+          icon: "error",
+          title: "Delete failed",
+          text: errorMessage(err, "Something went wrong. Please try again."),
+          confirmButtonColor: "#4e73df",
+        });
+      }
+    });
+
+    loadOrders();
+  });
+</script>

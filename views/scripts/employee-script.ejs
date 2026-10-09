@@ -1,0 +1,229 @@
+<script>
+  $(document).ready(function () {
+    let employeeById = {};
+
+    const esc = (v) =>
+      String(v ?? "").replace(
+        /[&<>"']/g,
+        (c) =>
+          ({
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;",
+          })[c],
+      );
+
+    const Toast = Swal.mixin({
+      toast: true,
+      position: "top-end",
+      showConfirmButton: false,
+      timer: 2500,
+      timerProgressBar: true,
+    });
+
+    const errorMessage = (err, fallback) =>
+      err?.responseJSON?.message || fallback;
+
+    // ---------- LOAD ----------
+    async function loadEmployee() {
+      const employee = await queryUtility.Load("/employee/load");
+      const $tbody = $("#employeeBody").empty();
+      employeeById = {};
+
+      for (const s of employee) {
+        employeeById[s.Id] = s;
+
+        $tbody.append(`
+                      <tr>
+                          <td>${esc(s.Id)}</td>
+                          <td>${esc(s.Name)}</td>
+                          <td>${esc(s.Age)}</td>
+                          <td>${esc(s.Department)}</td>
+                          <td>${esc(s.Position)}</td>
+                          <td>${esc(s.Salary)}</td>
+                          <td>${esc(s.Years)}</td>
+                          <td>${esc(s.City)}</td>
+                          <td>${esc(s.Performance)}</td>
+                          <td>
+                              <button type="button" class="btn btn-secondary btn-sm btn-edit" data-id="${esc(s.Id)}">
+                                  <i class="fas fa-edit"></i> Edit
+                              </button>
+                              <button type="button" class="btn btn-danger btn-sm ml-2 btn-delete" data-id="${esc(s.Id)}">
+                                  <i class="fas fa-trash"></i> Delete
+                              </button>
+                          </td>
+                      </tr>
+                  `);
+      }
+    }
+
+    // ---------- ADD POSITION ----------
+    async function addPositon() {
+      const position = await queryUtility.Load("/roles/load");
+
+      for (p in position) {
+        console.log(p);
+      }
+    }
+
+    // ---------- MODAL HELPERS ----------
+    function openModal(emp) {
+      const isEdit = !!emp;
+
+      $("#employeeForm")[0].reset();
+      $("#employeeForm .form-control").removeClass("is-invalid");
+
+      $("#employeeId").val(isEdit ? emp.Id : "");
+      $("#employeeModalTitle").html(
+        isEdit
+          ? '<i class="fas fa-user-edit mr-2"></i>Edit Student'
+          : '<i class="fas fa-user-plus mr-2"></i>Add Student',
+      );
+
+      if (isEdit) {
+        $("#employeeName").val(emp.Name);
+        $("#employeeAge").val(emp.Age);
+        $("#employeeDepartment").val(emp.Department);
+        $("#employeeSalary").val(emp.Salary);
+        $("#employeeYears").val(emp.Years);
+        $("#employeeCity").val(emp.City);
+        $("#employeePerformance").val(emp.Performance);
+      }
+
+      $("#employeeModal").modal("show");
+    }
+
+    function getFormData() {
+      return {
+        Name: $("#employeeName").val().trim(),
+        Age: $("#employeeAge").val().trim(),
+        Department: $("#employeeDepartment").val(),
+        Salary: $("#employeeSalary").val().trim(),
+        Years: $("#employeeYears").val().trim(),
+        City: $("#employeeCity").val().trim(),
+        Performance: $("#employeePerformance").val().trim(),
+      };
+    }
+
+    function validate(p) {
+      const checks = {
+        "#employeeName": !!p.Name,
+        "#employeeAge": !!p.Age,
+        "#employeeDepartment": !!p.Department,
+        "#employeeSalary": !!p.Salary,
+        "#employeeYears": !!p.Years,
+        "#employeeCity": !!p.City,
+        "#employeePerformance": !!p.Performance,
+      };
+      let valid = true;
+      for (const [sel, ok] of Object.entries(checks)) {
+        $(sel).toggleClass("is-invalid", !ok);
+        if (!ok) valid = false;
+      }
+      return valid;
+    }
+
+    // ---------- ADD / EDIT OPEN ----------
+    $("#btnAdd").on("click", () => openModal(null));
+
+    $("#employeeBody").on("click", ".btn-edit", function () {
+      const employee = employeeById[$(this).data("id")];
+      if (employee) openModal(employee);
+    });
+
+    // ---------- SUBMIT (create or update) ----------
+    $("#employeeForm").on("submit", async function (e) {
+      e.preventDefault();
+
+      const id = $("#employeeId").val();
+      const isEdit = id !== "";
+      const payload = getFormData();
+
+      if (!validate(payload)) return;
+
+      const confirm = await Swal.fire({
+        title: isEdit ? "Save changes?" : "Add this employee?",
+        text: isEdit
+          ? `Update ${payload.Name}'s record?`
+          : `Add ${payload.Name} to the list?`,
+        icon: "question",
+        showCancelButton: true,
+        confirmButtonText: isEdit ? "Yes, save" : "Yes, add",
+        cancelButtonText: "Cancel",
+        confirmButtonColor: "#4e73df",
+        cancelButtonColor: "#858796",
+      });
+      if (!confirm.isConfirmed) return;
+
+      Swal.fire({
+        title: "Saving...",
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading(),
+      });
+
+      try {
+        if (isEdit) {
+          await queryUtility.Update(
+            `/employee/update/${encodeURIComponent(id)}`,
+            payload,
+          );
+        } else {
+          await queryUtility.Save("/employee/create", payload);
+        }
+
+        $("#employeeModal").modal("hide");
+        await loadEmployee();
+        Swal.close();
+        Toast.fire({
+          icon: "success",
+          title: isEdit
+            ? "Employee updated successfully"
+            : "Employee added successfully",
+        });
+      } catch (err) {
+        Swal.fire({
+          icon: "error",
+          title: isEdit ? "Update failed" : "Create failed",
+          text: errorMessage(err, "Something went wrong. Please try again."),
+          confirmButtonColor: "#4e73df",
+        });
+      }
+    });
+
+    $("#employeeBody").on("click", ".btn-delete", async function () {
+      const id = $(this).data("id");
+      const employee = employeeById[id];
+      if (!employee) return;
+
+      const confirm = await Swal.fire({
+        title: "Delete this employee?",
+        text: `${employee.Name} will be permanently removed.`,
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonText: "Yes, delete",
+        cancelButtonText: "Cancel",
+        confirmButtonColor: "#e74a3b",
+        cancelButtonColor: "#858796",
+      });
+      if (!confirm.isConfirmed) return;
+
+      try {
+        await queryUtility.Delete(`/employee/delete/${encodeURIComponent(id)}`);
+        await loadEmployee();
+        Toast.fire({ icon: "success", title: "Employee deleted" });
+      } catch (err) {
+        Swal.fire({
+          icon: "error",
+          title: "Delete failed",
+          text: errorMessage(err, "Something went wrong. Please try again."),
+          confirmButtonColor: "#4e73df",
+        });
+      }
+    });
+
+    loadEmployee();
+    addPositon();
+  });
+</script>

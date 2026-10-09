@@ -1,0 +1,263 @@
+<div class="card shadow mb-4">
+  <div
+    class="card-header py-3 d-flex justify-content-between align-items-center"
+  >
+    <h6 class="m-0 font-weight-bold text-primary">Students</h6>
+    <button type="button" class="btn btn-primary btn-sm" id="btnAdd">
+      <i class="fas fa-plus mr-1"></i>Add Student
+    </button>
+  </div>
+
+  <div class="card-body">
+    <div class="table-responsive">
+      <table
+        class="table table-bordered"
+        id="employeeTable"
+        width="100%"
+        cellspacing="0"
+      >
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Age</th>
+            <th>Department</th>
+            <th>Position</th>
+            <th>Salary</th>
+            <th>Years</th>
+            <th>City</th>
+            <th>Performance</th>
+            <th style="width: 170px">Action</th>
+          </tr>
+        </thead>
+
+        <tbody id="employeeBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div
+  class="modal fade"
+  id="employeeModal"
+  tabindex="-1"
+  role="dialog"
+  aria-labelledby="studentModalTitle"
+  aria-hidden="true"
+>
+  <!-- ONLY CHANGE: added modal-lg -->
+  <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title" id="employeeModalTitle"></h5>
+
+        <button
+          class="close text-white"
+          type="button"
+          data-dismiss="modal"
+          aria-label="Close"
+        >
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+
+      <form id="employeeForm" novalidate>
+        <div class="modal-body">
+          <input type="hidden" id="employeeId" />
+
+          <div class="form-group">
+            <label
+              for="employeeName"
+              class="small font-weight-bold text-gray-800"
+            >
+              Name
+            </label>
+
+            <input
+              type="text"
+              class="form-control"
+              id="employeeName"
+              placeholder="e.g. Jovit Jaworski"
+              required
+            />
+
+            <div class="invalid-feedback">Name is required.</div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group col-md-7">
+              <label
+                for="employeeAge"
+                class="small font-weight-bold text-gray-800"
+              >
+                Age
+              </label>
+
+              <input
+                type="text"
+                class="form-control"
+                id="employeeAge"
+                placeholder="e.g. 18"
+                required
+              />
+
+              <div class="invalid-feedback">Age is required.</div>
+            </div>
+
+            <div class="form-group col-md-5">
+              <label
+                for="employeeDepartment"
+                class="small font-weight-bold text-gray-800"
+              >
+                Department
+              </label>
+
+              <select class="form-control" id="employeeDepartment" required>
+                <option value="">Select...</option>
+                <option>Information Technology(IT)</option>
+                <option>Human Resources</option>
+                <option>Finance</option>
+                <option>Accounting</option>
+                <option>Marketing</option>
+                <option>Sales</option>
+                <option>Operations</option>
+                <option>Custom Service</option>
+                <option>Product Management</option>
+                <option>Research & Development(R&D)</option>
+                <option>Design</option>
+                <option>Legal</option>
+              </select>
+
+              <div class="invalid-feedback">Select a department.</div>
+            </div>
+          </div>
+
+          <div class="form-group col-md-5">
+            <label
+              for="employeePosition"
+              class="small font-weight-bold text-gray-800"
+            >
+              Department
+            </label>
+
+            <select class="form-control" id="employeePosition" required>
+              <option value="">Select...</option>
+              <option>Intern</option>
+              <option>Junior Developer</option>
+              <option>Software Developer</option>
+              <option>Senior Developer</option>
+              <option>Team Lead</option>
+              <option>Project Manager</option>
+              <option>Product Manager</option>
+              <option>Data Analyst</option>
+              <option>Data Scientist</option>
+              <option>Marketing Specialist</option>
+              <option>HR Specialist</option>
+              <option>Accountant</option>
+            </select>
+
+            <div class="invalid-feedback">Select a Position.</div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group col-md-7">
+              <label
+                for="employeeSalary"
+                class="small font-weight-bold text-gray-800"
+              >
+                Salary
+              </label>
+
+              <input
+                type="text"
+                class="form-control"
+                id="employeeSalary"
+                placeholder="e.g. 10000"
+                required
+              />
+
+              <div class="invalid-feedback">Salary is required.</div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group col-md-7">
+                <label
+                  for="employeeYears"
+                  class="small font-weight-bold text-gray-800"
+                >
+                  Years
+                </label>
+
+                <input
+                  type="text"
+                  class="form-control"
+                  id="employeeYears"
+                  placeholder="e.g. 1 year"
+                  required
+                />
+
+                <div class="invalid-feedback">Years is required.</div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group col-md-7">
+                  <label
+                    for="employeeCity"
+                    class="small font-weight-bold text-gray-800"
+                  >
+                    City
+                  </label>
+
+                  <input
+                    type="text"
+                    class="form-control"
+                    id="employeeCity"
+                    placeholder="e.g. Cavite"
+                    required
+                  />
+
+                  <div class="invalid-feedback">City is required.</div>
+                </div>
+
+                <div class="form-row">
+                  <div class="form-group col-md-7">
+                    <label
+                      for="employeePerformance"
+                      class="small font-weight-bold text-gray-800"
+                    >
+                      Performance
+                    </label>
+
+                    <input
+                      type="text"
+                      class="form-control"
+                      id="employeePerformance"
+                      placeholder="e.g. 100"
+                      required
+                    />
+
+                    <div class="invalid-feedback">Performance is required.</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button
+              class="btn btn-secondary"
+              type="button"
+              data-dismiss="modal"
+            >
+              Cancel
+            </button>
+
+            <button class="btn btn-primary" type="submit" id="submitBtn">
+              <i class="fas fa-save mr-1"></i>Save
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

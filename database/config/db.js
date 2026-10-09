@@ -12,13 +12,37 @@ const pool = mysql.createPool({
   queueLimit: 0,
 });
 
-// Use the promise-based API so you can use async/await
+// Promise-based API so you can use async/await
 const promisePool = pool.promise();
 
-// Optional: quick test on startup to catch bad credentials early
-promisePool
-  .query("SELECT 1")
-  .then(() => console.log("✅ Database connected"))
-  .catch((err) => console.error("❌ Database connection failed:", err.message));
+//@ universal query: SELECT, INSERT, UPDATE, DELETE
+const Query = async (sql, params = [], prefixes) => {
+  try {
+    const [result] = await promisePool.query(sql, params);
+    const type = sql.trim().toUpperCase();
 
-module.exports = promisePool;
+    if (type.startsWith("INSERT")) {
+      return { ...result, insertId: result.insertId };
+    }
+    if (prefixes && type.startsWith("SELECT")) {
+      return DataModeling(result, prefixes);
+    }
+    return result;
+  } catch (error) {
+    console.error("Error executing query:", error);
+    throw error;
+  }
+};
+
+// Call once at startup to catch bad credentials early
+const testConnection = async () => {
+  const conn = await promisePool.getConnection();
+  try {
+    await conn.ping();
+    console.log("✅ Database connected");
+  } finally {
+    conn.release();
+  }
+};
+
+module.exports = { pool: promisePool, Query, testConnection };
